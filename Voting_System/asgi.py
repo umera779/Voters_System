@@ -1,4 +1,5 @@
 """
+Request Method:	
 ASGI config for Voting_System project.
 
 It exposes the ASGI callable as a module-level variable named ``application``.
