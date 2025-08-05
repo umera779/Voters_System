@@ -1,0 +1,46 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <meta charset="UTF-8" />
+    <title>Public Results</title>
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script>
+      function showVotes(positionId) {
+        document.querySelectorAll('.votes-section').forEach(div => div.classList.add('hidden'));
+        document.getElementById('votes-' + positionId).classList.remove('hidden');
+      }
+    </script>
+</head>
+<body class="min-h-screen bg-gray-100 dark:bg-gray-900 text-gray-900 dark:text-gray-100 p-4">
+    <div class="max-w-lg mx-auto bg-white dark:bg-gray-800 rounded-lg shadow-lg p-4">
+        <h2 class="text-2xl font-bold mb-6 text-center text-blue-600 dark:text-blue-400">Public Voting Results</h2>
+        <div class="mb-4">
+            <label for="position-select" class="block mb-2 font-semibold">Select Position:</label>
+            <select id="position-select" onchange="showVotes(this.value)"
+                class="w-full px-4 py-2 rounded-lg border focus:outline-none focus:ring-2 focus:ring-blue-500 dark:bg-gray-700 dark:text-gray-100">
+                {% for pos in positions %}
+                    <option value="{{ pos.id }}">{{ pos.title }}</option>
+                {% endfor %}
+            </select>
+        </div>
+        {% for pos, votes in votes_by_position.items %}
+            <div id="votes-{{ pos.id }}" class="votes-section {% if not forloop.first %}hidden{% endif %}">
+                <h3 class="text-lg font-bold mb-3 text-blue-600 dark:text-blue-400">{{ pos.title }}</h3>
+                {% if votes %}
+                    <ul class="space-y-2">
+                        {% for vote in votes %}
+                            <li class="p-2 rounded bg-gray-50 dark:bg-gray-700 flex flex-col sm:flex-row gap-2">
+                                <span class="font-semibold">{{ vote.user.username }}</span>voted
+                                <span class="font-bold text-green-600 dark:text-green-200">{{ vote.candidate.name }}</span>
+                            </li>
+                        {% endfor %}
+                    </ul>
+                {% else %}
+                    <p class="text-gray-400 text-center py-4">No votes for this position.</p>
+                {% endif %}
+            </div>
+        {% endfor %}
+    </div>
+</body>
+</html>

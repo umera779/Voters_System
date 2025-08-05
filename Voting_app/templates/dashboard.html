@@ -1,0 +1,298 @@
+<!DOCTYPE html>
+<html lang="en" class="bg-gray-100 dark:bg-gray-900">
+<head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Dashboard</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script>
+      tailwind.config = {
+        darkMode: 'class',
+      }
+    </script>
+    <script src="https://code.jquery.com/jquery-3.6.0.min.js"></script>
+</head>
+
+<body class="min-h-screen bg-gray-100 dark:bg-gray-900 text-gray-900 dark:text-gray-100 transition-colors pb-20">
+{%if messages%}
+    {% for message in messages %}
+    <div id="login-success-popup" class="fixed inset-0 flex items-center justify-center z-50">
+        <div class="bg-green-500 text-white px-6 py-4 rounded-lg shadow-lg text-lg font-semibold">
+            Login successful!
+        </div>
+    </div>
+    
+    {%endfor%}
+{% endif %}
+    <div class="max-w-full mx-auto p-3">
+                <!-- Timer Section -->
+     
+        <!-- Header Section -->
+        <div class="flex justify-between items-center mb-4">
+            <div class="flex-1 min-w-0">
+
+
+                {% if is_admin %}
+                <p class="text-base font-semibold truncate"><span class="text-blue-600 dark:text-blue-400">Admin</span></p>
+                {%else%}
+                <p class="text-base font-semibold truncate">Welcome, <span class="text-blue-600 dark:text-blue-400">{{user.username}}</span></p>
+                {% endif %}
+            </div>
+            <div class="flex items-center gap-2 flex-shrink-0">
+                <button id="dark-toggle" class="px-2 py-1 rounded bg-gray-200 dark:bg-gray-700 text-gray-800 dark:text-gray-200 focus:outline-none text-sm">🌙</button>
+                {% if is_admin %}
+                <a href="{% url 'admin_dashboard' %}" class="px-2 py-1 rounded bg-blue-500 text-white hover:bg-blue-600 transition text-sm">Begin Election</a>
+
+                <a href="{% url 'admin:index' %}" class="px-2 py-1 rounded bg-blue-500 text-white hover:bg-blue-600 transition text-sm">Panel</a>
+                {% endif %}
+                <a href="{% url 'logout' %}" class="px-2 py-1 rounded bg-red-500 text-white hover:bg-red-600 transition text-sm">Logout</a>
+            </div>
+        </div>
+
+        <!-- Title -->
+        <h2 class="text-xl font-bold mb-4 text-center">Election Results</h2>
+          <p class="text-lg font-semibold">
+            <p class="text-lg font-semibold text-center">
+                Election ends in: 
+                <span id="timer-hours"></span>:
+                <span id="timer-minutes"></span>:
+                <span id="timer-seconds"></span>
+            </p>
+        <!-- Top Candidates Section -->
+        <div id="top-candidates" class="mb-6">
+            <!-- Top candidates by position will be loaded here -->
+        </div>
+
+        <!-- Controls Section -->
+        <div class="flex justify-between items-center mb-3">
+            <h3 class="text-lg font-semibold">All Positions</h3>
+            <div class="flex gap-2">
+                <button id="refresh-results" class="px-2 py-1 rounded bg-gray-300 dark:bg-gray-700 text-gray-800 dark:text-gray-200 hover:bg-gray-400 dark:hover:bg-gray-600 transition text-sm">Refresh</button>
+                <button id="toggle-positions" class="px-2 py-1 rounded bg-purple-500 text-white hover:bg-purple-600 transition text-sm">Show All</button>
+            </div>
+        </div>
+
+        <!-- Positions Dropdown -->
+        <div id="positions-dropdown" class="hidden mb-4">
+            <div id="results-area" class="space-y-4">
+                <!-- Results will be loaded here -->
+            </div>
+        </div>
+
+     
+
+<div id="public-results-link" class="mt-8 text-center hidden">
+    <a href="{% url 'public_results' %}" class="px-4 py-2 bg-blue-600 text-white rounded-lg font-semibold shadow hover:bg-blue-700 transition">
+        View Public Results
+    </a>
+</div>
+
+<div class="fixed bottom-0 left-0 w-full bg-green-500 z-50">
+    <form id="vote-form" method="post" action="{% url 'voting_casting' %}" class="block text-center">
+        {% csrf_token %}
+        <button type="submit" id="cast-vote-btn"
+            class="w-full px-4 py-3 text-lg font-semibold text-white hover:bg-green-600 transition"
+            {% if not can_vote %}disabled style="opacity:0.5;pointer-events:none;"{% endif %}>
+            Cast Your Vote
+        </button>
+    </form>
+</div>
+
+
+
+
+    <!-- Modal -->
+    <div id="all-modal" class="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50 hidden p-4">
+        <div class="bg-white dark:bg-gray-800 rounded-lg shadow-lg max-w-full w-full max-h-[90vh] overflow-y-auto p-4 relative">
+            <button id="close-modal" class="absolute top-2 right-2 text-gray-500 hover:text-gray-800 dark:hover:text-gray-200 z-10">✖</button>
+            <h3 class="text-lg font-bold mb-4 pr-6">All Candidates & Votes</h3>
+            <div id="all-candidates-list" class="space-y-2"></div>
+        </div>
+    </div>
+
+    <script>
+let timer = {{ timer }};
+function pad(num) {
+    return num.toString().padStart(2, '0');
+}
+
+function showResultsLink() {
+        document.getElementById('public-results-link').classList.remove('hidden');
+    }
+function updateTimer() {
+    if (timer >= 0) {
+        let hours = Math.floor(timer / 3600);
+        let minutes = Math.floor((timer % 3600) / 60);
+        let seconds = timer % 60;
+        document.getElementById('timer-hours').textContent = pad(hours);
+        document.getElementById('timer-minutes').textContent = pad(minutes);
+        document.getElementById('timer-seconds').textContent = pad(seconds);
+        if (timer === 0) {
+            document.getElementById('cast-vote-btn').disabled = true;
+            document.getElementById('cast-vote-btn').style.opacity = '0.5';
+            document.getElementById('cast-vote-btn').style.pointerEvents = 'none';
+            showResultsLink();
+        }
+        timer--;
+        setTimeout(updateTimer, 1000);
+    }
+}
+if (timer > 0) updateTimer();
+
+
+    // Dark mode toggle
+    const darkToggle = document.getElementById('dark-toggle');
+    darkToggle.addEventListener('click', function() {
+        document.documentElement.classList.toggle('dark');
+        localStorage.setItem('theme', document.documentElement.classList.contains('dark') ? 'dark' : 'light');
+    });
+    
+    // Set theme on load
+    if (localStorage.getItem('theme') === 'dark' || (!('theme' in localStorage) && window.matchMedia('(prefers-color-scheme: dark)').matches)) {
+        document.documentElement.classList.add('dark');
+    } else {
+        document.documentElement.classList.remove('dark');
+    }
+
+    // Helper function to truncate text
+    function truncateText(text, maxLength) {
+        if (text.length <= maxLength) return text;
+        return text.substring(0, maxLength) + '...';
+    }
+
+    // AJAX results fetch
+    function updateResults() {
+        $.ajax({
+            url: window.location.pathname,
+            type: 'GET',
+            headers: { 'X-Requested-With': 'XMLHttpRequest' },
+            success: function(response) {
+                // Top candidates section - mobile optimized
+                let topHtml = '<div class="mb-3 text-center"><h3 class="text-lg font-semibold mb-3">Top Candidates</h3></div>';
+                
+                // Create rows of 3 candidates each
+                let topCandidates = [];
+                response.results.forEach(function(pos) {
+                    if (pos.candidates.length) {
+                        let sorted = pos.candidates.slice().sort((a, b) => b.votes - a.votes);
+                        let top = sorted[0];
+                        topCandidates.push({...top, position: pos.position});
+                    }
+                });
+
+                // Group candidates into rows of 3
+                for (let i = 0; i < topCandidates.length; i += 3) {
+                    topHtml += '<div class="grid grid-cols-3 gap-2 mb-4">';
+                    for (let j = i; j < i + 3 && j < topCandidates.length; j++) {
+                        let candidate = topCandidates[j];
+                        let imgSrc = candidate.image ? candidate.image : ('https://ui-avatars.com/api/?name=' + encodeURIComponent(candidate.name));
+                        topHtml += `
+                            <div class="flex flex-col items-center text-center bg-white dark:bg-gray-800 rounded-lg p-2 shadow-sm">
+                                <img src="${imgSrc}" alt="${candidate.name}" class="w-12 h-12 rounded-full object-cover border-2 border-blue-400 mb-1" />
+                                <div class="font-semibold text-xs leading-tight mb-1" title="${candidate.name}">${truncateText(candidate.name, 12)}</div>
+                                <div class="text-xs text-blue-600 dark:text-blue-400 mb-1" title="${candidate.position}">${truncateText(candidate.position, 10)}</div>
+                                <div class="text-xs bg-green-100 dark:bg-green-900 text-green-800 dark:text-green-200 px-2 py-1 rounded-full">
+                                    <span class="font-bold">${candidate.votes}</span> votes
+                                </div>
+                            </div>
+                        `;
+                    }
+                    topHtml += '</div>';
+                }
+
+                // All positions section - mobile optimized
+                let html = '';
+                response.results.forEach(function(pos) {
+                    html += `<div class="bg-white dark:bg-gray-800 rounded-lg p-3 shadow-sm">
+                        <h4 class="text-sm font-bold mb-3 text-center border-b pb-2">${pos.position}</h4>`;
+                    
+                    if (pos.candidates.length) {
+                        let sorted = pos.candidates.slice().sort((a, b) => b.votes - a.votes);
+                        html += '<div class="space-y-2">';
+                        sorted.forEach(function(c) {
+                            let imgSrc = c.image ? c.image : ('https://ui-avatars.com/api/?name=' + encodeURIComponent(c.name));
+                            html += `
+                                <div class="flex items-center gap-3 p-2 bg-gray-50 dark:bg-gray-700 rounded-lg">
+                                    <img src="${imgSrc}" alt="${c.name}" class="w-10 h-10 rounded-full object-cover border-2 border-blue-400 flex-shrink-0" />
+                                    <div class="flex-1 min-w-0">
+                                        <div class="font-semibold text-sm truncate">${c.name}</div>
+                                        <div class="text-xs text-gray-500 dark:text-gray-300 truncate">${c.department}</div>
+                                        <div class="text-xs text-green-600 dark:text-green-400 font-bold">${c.votes} votes</div>
+                                    </div>
+                                </div>
+                            `;
+                        });
+                        html += '</div>';
+                    } else {
+                        html += '<div class="text-gray-400 text-center py-4">No candidates for this position.</div>';
+                    }
+                    html += '</div>';
+                });
+
+                $('#results-area').html(html);
+                $('#top-candidates').html(topHtml);
+
+                // Modal content
+                let allCandidates = [];
+                response.results.forEach(function(pos) {
+                    pos.candidates.forEach(function(c) {
+                        allCandidates.push({...c, position: pos.position});
+                    });
+                });
+                
+                let allHtml = '';
+                allCandidates.forEach(function(c) {
+                    let imgSrc = c.image ? c.image : ('https://ui-avatars.com/api/?name=' + encodeURIComponent(c.name));
+                    allHtml += `
+                        <div class="flex items-center gap-3 p-3 bg-gray-50 dark:bg-gray-700 rounded-lg">
+                            <img src="${imgSrc}" alt="${c.name}" class="w-10 h-10 rounded-full object-cover border-2 border-blue-400 flex-shrink-0" />
+                            <div class="flex-1 min-w-0">
+                                <div class="font-semibold text-sm">${c.name}</div>
+                                <div class="text-xs text-gray-500 dark:text-gray-300">${c.department}</div>
+                                <div class="text-xs text-blue-600 dark:text-blue-400">${c.position}</div>
+                                <div class="text-xs text-green-600 dark:text-green-400 font-bold">${c.votes} votes</div>
+                            </div>
+                        </div>
+                    `;
+                });
+                $('#all-candidates-list').html(allHtml);
+            },
+            error: function() {
+                $('#results-area').html('<div class="text-red-500 text-center p-4">Could not load results.</div>');
+            }
+        });
+    }
+
+    // Event listeners
+    $('#refresh-results').on('click', updateResults);
+    $('#toggle-positions').on('click', function() {
+        $('#positions-dropdown').toggleClass('hidden');
+        $(this).text($('#positions-dropdown').hasClass('hidden') ? 'Show All' : 'Hide All');
+    });
+
+    // Modal logic
+    $('#view-all-btn').on('click', function() {
+        $('#all-modal').removeClass('hidden');
+    });
+    $('#close-modal').on('click', function() {
+        $('#all-modal').addClass('hidden');
+    });
+    $('#all-modal').on('click', function(e) {
+        if (e.target === this) {
+            $(this).addClass('hidden');
+        }
+    });
+
+    // Initial load
+    updateResults();
+    $('#positions-dropdown').addClass('hidden');
+    
+    // Optional: auto-refresh every 30 seconds
+    // setInterval(updateResults, 30
+        setTimeout(function() {
+            document.getElementById('login-success-popup').style.display = 'none';
+        }, 3000);
+    
+    </script>
+</body>
+</html>

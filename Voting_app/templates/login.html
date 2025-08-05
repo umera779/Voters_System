@@ -1,0 +1,54 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <meta charset="UTF-8" />
+    <title>Login</title>
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <script src="https://cdn.tailwindcss.com"></script>
+</head>
+<body class="min-h-screen bg-gray-100 dark:bg-gray-900 flex items-center justify-center text-gray-900 dark:text-gray-100">
+    <div class="w-full max-w-xs mx-auto p-6 bg-white dark:bg-gray-800 rounded-lg shadow-lg">
+        <h2 class="text-2xl font-bold mb-6 text-center text-blue-600 dark:text-blue-300">Login | Voting System</h2>
+        <form method="post" action="{% url 'login' %}" class="space-y-4" id="loginForm">
+            {% csrf_token %}
+            {% if error %}
+                <div class="text-red-500 text-sm mb-2">{{ error }}</div>
+            {% endif %}
+            {% if messages %}
+                <ul class="mb-2">
+                    {% for message in messages %}
+                        <li class="text-red-500 text-sm">{{ message }}</li>
+                    {% endfor %}
+                </ul>
+            {% endif %}
+            <input type="text" name="username" placeholder="Enter username"
+                class="w-full px-4 py-2 rounded-lg border focus:outline-none focus:ring-2 focus:ring-blue-500 dark:bg-gray-700 dark:text-gray-100" required>
+            <input type="password" name="password" placeholder="Enter password"
+                class="w-full px-4 py-2 rounded-lg border focus:outline-none focus:ring-2 focus:ring-blue-500 dark:bg-gray-700 dark:text-gray-100" required>
+            <button type="submit"
+                id="loginBtn"
+                class="w-full py-2 bg-blue-600 text-white font-semibold rounded-lg shadow hover:bg-blue-700 transition flex justify-center items-center relative">
+                <span id="loginText">Login</span>
+                <span id="loader" class="hidden absolute right-4">
+                    <svg class="animate-spin h-5 w-5 text-white" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24">
+                        <circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"></circle>
+                        <path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8v4a4 4 0 00-4 4H4z"></path>
+                    </svg>
+                </span>
+            </button>
+        </form>
+    </div>
+    <script>
+        const loginForm = document.getElementById('loginForm');
+        const loginBtn = document.getElementById('loginBtn');
+        const loginText = document.getElementById('loginText');
+        const loader = document.getElementById('loader');
+
+        loginForm.addEventListener('submit', function() {
+            loginBtn.disabled = true;
+            loginText.textContent = "Logging in...";
+            loader.classList.remove('hidden');
+        });
+    </script>
+</body>
+</html>

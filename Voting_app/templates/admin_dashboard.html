@@ -1,0 +1,63 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <meta charset="UTF-8" />
+    <title>Election Manager</title>
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <script src="https://cdn.tailwindcss.com"></script>
+</head>
+<body class="min-h-screen bg-gray-100 dark:bg-gray-900 text-gray-900 dark:text-gray-100 flex items-center justify-center">
+    <div class="w-full max-w-md mx-auto p-4 sm:p-6 bg-white dark:bg-gray-800 rounded-lg shadow-lg">
+        <h2 class="text-2xl font-bold mb-6 text-center text-blue-600 dark:text-blue-400">Election Manager</h2>
+        <form method="post" class="space-y-4 mb-8">
+            {% csrf_token %}
+            <div>
+                <label class="block text-sm font-medium text-gray-700 dark:text-gray-200 mb-1">Hours</label>
+                <input type="number" name="duration_hours" min="0" value="0" required
+                    class="w-full px-4 py-2 rounded-lg border focus:outline-none focus:ring-2 focus:ring-blue-500 dark:bg-gray-700 dark:text-gray-100" />
+            </div>
+            <div>
+                <label class="block text-sm font-medium text-gray-700 dark:text-gray-200 mb-1">Minutes</label>
+                <input type="number" name="duration_minutes" min="0" value="0" required
+                    class="w-full px-4 py-2 rounded-lg border focus:outline-none focus:ring-2 focus:ring-blue-500 dark:bg-gray-700 dark:text-gray-100" />
+            </div>
+            <div>
+                <label class="block text-sm font-medium text-gray-700 dark:text-gray-200 mb-1">Seconds</label>
+                <input type="number" name="duration_seconds" min="0" value="0" required
+                    class="w-full px-4 py-2 rounded-lg border focus:outline-none focus:ring-2 focus:ring-blue-500 dark:bg-gray-700 dark:text-gray-100" />
+            </div>
+            <button type="submit"
+                class="w-full py-3 bg-blue-600 text-white font-semibold rounded-lg shadow hover:bg-blue-700 transition">
+                Start Election
+            </button>
+        </form>
+
+        <h3 class="text-lg font-bold mb-3 text-gray-800 dark:text-gray-100 text-center">Ongoing Elections</h3>
+        {% if ongoing_elections %}
+            <ul class="space-y-3">
+                {% for e in ongoing_elections %}
+                    <li class="p-4 rounded-lg border bg-green-50 dark:bg-green-900 shadow flex flex-col gap-1">
+                        <span class="text-xs text-gray-500 dark:text-gray-300 font-semibold">Started:</span>
+                        <span class="text-sm font-bold text-gray-700 dark:text-gray-100">{{ e.start_time|date:"Y-m-d H:i:s" }}</span>
+                        <span class="text-xs text-gray-500 dark:text-gray-300 font-semibold">Ends:</span>
+                        <span class="text-sm font-bold text-gray-700 dark:text-gray-100">{{ e.end_time|date:"Y-m-d H:i:s" }}</span>
+                        <span class="text-xs text-gray-500 dark:text-gray-300 font-semibold">Duration:</span>
+                        <span class="text-sm font-bold text-green-700 dark:text-green-400">{{ e.duration_minutes }} minutes</span>
+                    </li>
+                {% endfor %}
+            </ul>
+        {% else %}
+            <p class="text-center text-red-500 font-semibold mt-4">No ongoing elections.</p>
+        {% endif %}
+
+        <div class="mt-8 text-center">
+            <button onclick="window.history.back()"
+                class="py-2 px-4 bg-gray-200 dark:bg-gray-700 text-gray-800 dark:text-gray-200 font-semibold rounded-lg shadow hover:bg-gray-300 dark:hover:bg-gray-600 transition inline-flex items-center">
+                <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5 mr-2" viewBox="0 0 20 20" fill="currentColor">
+                    <path fill-rule="evenodd" d="M12.707 5.293a1 1 0 010 1.414L9.414 10l3.293 3.293a1 1 0 01-1.414 1.414l-4-4a1 1 0 010-1.414l4-4a1 1 0 011.414 0z" clip-rule="evenodd" />
+                </svg>
+                Go Back
+            </button>
+    </div>
+</body>
+</html>
