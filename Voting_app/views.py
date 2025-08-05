@@ -6,6 +6,9 @@ from django.contrib import messages
 from django.contrib.auth.decorators import login_required 
 from .models import Candidate, Position, Vote
 from django.http import JsonResponse
+from django import forms
+from .models import Department, Candidate, Position, Vote, Election
+from django.contrib.auth.decorators import user_passes_test
 
 # Create your views here.
 
@@ -14,29 +17,93 @@ from django.utils import timezone
 from .models import Election
 from django.utils import timezone
 
+class DepartmentForm(forms.ModelForm):
+    class Meta:
+        model = Department
+        fields = ['dept']
+
+class PositionForm(forms.ModelForm):
+    class Meta:
+        model = Position
+        fields = ['title']
+
+class CandidateForm(forms.ModelForm):
+    class Meta:
+        model = Candidate
+        fields = ['name', 'candidate_position', 'votes', 'department', 'image']
+
+class VoteForm(forms.ModelForm):
+    class Meta:
+        model = Vote
+        fields = ['user', 'position', 'candidate']
+
+class ElectionForm(forms.ModelForm):
+    class Meta:
+        model = Election
+        fields = ['is_active', 'start_time', 'end_time', 'duration_minutes']
+
 @login_required
+@user_passes_test(lambda u: u.is_superuser)
 def admin_dashboard(request):
-    election = Election.objects.first()
-    ongoing_elections = Election.objects.filter(is_active=True, end_time__gt=timezone.now())
-    if request.method == "POST":
-        hours = int(request.POST.get("duration_hours", 0))
-        minutes = int(request.POST.get("duration_minutes", 0))
-        seconds = int(request.POST.get("duration_seconds", 0))
-        total_seconds = hours * 3600 + minutes * 60 + seconds
-        start_time = timezone.now()
-        end_time = start_time + timezone.timedelta(seconds=total_seconds)
-        if not election:
-            election = Election.objects.create(
-                is_active=True, start_time=start_time, end_time=end_time, duration_minutes=(total_seconds // 60)
-            )
-        else:
-            election.is_active = True
-            election.start_time = start_time
-            election.end_time = end_time
-            election.duration_minutes = (total_seconds // 60)
-            election.save()
-        return redirect('/')
-    return render(request, 'admin_dashboard.html', {'election': election, 'ongoing_elections': ongoing_elections})
+    departments = Department.objects.all()
+    positions = Position.objects.all()
+    candidates = Candidate.objects.all()
+    votes = Vote.objects.all()
+    elections = Election.objects.all()
+
+    dept_form = DepartmentForm(request.POST or None)
+    pos_form = PositionForm(request.POST or None)
+    cand_form = CandidateForm(request.POST or None, request.FILES or None)
+    vote_form = VoteForm(request.POST or None)
+    election_form = ElectionForm(request.POST or None)
+
+    # Handle deletion
+    if request.method == 'POST':
+        if 'delete_department' in request.POST:
+            Department.objects.filter(id=request.POST.get('delete_department')).delete()
+            return redirect('admin_dashboard')
+        elif 'delete_position' in request.POST:
+            Position.objects.filter(id=request.POST.get('delete_position')).delete()
+            return redirect('admin_dashboard')
+        elif 'delete_candidate' in request.POST:
+            Candidate.objects.filter(id=request.POST.get('delete_candidate')).delete()
+            return redirect('admin_dashboard')
+        elif 'delete_vote' in request.POST:
+            Vote.objects.filter(id=request.POST.get('delete_vote')).delete()
+            return redirect('admin_dashboard')
+        elif 'delete_election' in request.POST:
+            Election.objects.filter(id=request.POST.get('delete_election')).delete()
+            return redirect('admin_dashboard')
+        # Only process the form that was submitted
+        elif 'add_department' in request.POST and dept_form.is_valid():
+            dept_form.save()
+            return redirect('admin_dashboard')
+        elif 'add_position' in request.POST and pos_form.is_valid():
+            pos_form.save()
+            return redirect('admin_dashboard')
+        elif 'add_candidate' in request.POST and cand_form.is_valid():
+            cand_form.save()
+            return redirect('admin_dashboard')
+        elif 'add_vote' in request.POST and vote_form.is_valid():
+            vote_form.save()
+            return redirect('admin_dashboard')
+        elif 'add_election' in request.POST and election_form.is_valid():
+            election_form.save()
+            return redirect('admin_dashboard')
+
+    context = {
+        'departments': departments,
+        'positions': positions,
+        'candidates': candidates,
+        'votes': votes,
+        'elections': elections,
+        'dept_form': dept_form,
+        'pos_form': pos_form,
+        'cand_form': cand_form,
+        'vote_form': vote_form,
+        'election_form': election_form,
+    }
+    return render(request, 'admin_dashboard.html', context)
 
 from django.shortcuts import render
 from django.contrib.auth.decorators import login_required

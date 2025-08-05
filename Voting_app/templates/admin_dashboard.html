@@ -2,62 +2,142 @@
 <html>
 <head>
     <meta charset="UTF-8" />
-    <title>Election Manager</title>
+    <title>Admin Dashboard</title>
     <meta name="viewport" content="width=device-width, initial-scale=1" />
     <script src="https://cdn.tailwindcss.com"></script>
 </head>
-<body class="min-h-screen bg-gray-100 dark:bg-gray-900 text-gray-900 dark:text-gray-100 flex items-center justify-center">
-    <div class="w-full max-w-md mx-auto p-4 sm:p-6 bg-white dark:bg-gray-800 rounded-lg shadow-lg">
-        <h2 class="text-2xl font-bold mb-6 text-center text-blue-600 dark:text-blue-400">Election Manager</h2>
-        <form method="post" class="space-y-4 mb-8">
-            {% csrf_token %}
-            <div>
-                <label class="block text-sm font-medium text-gray-700 dark:text-gray-200 mb-1">Hours</label>
-                <input type="number" name="duration_hours" min="0" value="0" required
-                    class="w-full px-4 py-2 rounded-lg border focus:outline-none focus:ring-2 focus:ring-blue-500 dark:bg-gray-700 dark:text-gray-100" />
+<body class="min-h-screen bg-gray-100 dark:bg-gray-900 text-gray-900 dark:text-gray-100">
+    <div class="container mx-auto mt-4">
+        <h2 class="text-3xl font-bold mb-6 text-center text-blue-600 dark:text-blue-400">Admin Dashboard</h2>
+        <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+            <div class="bg-white dark:bg-gray-800 p-4 sm:p-6 rounded-lg shadow-lg">
+                <h4 class="text-xl font-semibold mb-4">Add Department</h4>
+                <form method="post" class="space-y-4 mb-4">
+                    {% csrf_token %}
+                    {{ dept_form.as_p }}
+                    <button type="submit" name="add_department"
+                        class="w-full py-2 bg-blue-600 text-white font-semibold rounded-lg shadow hover:bg-blue-700 transition">
+                        Add Department
+                    </button>
+                </form>
+                <h5 class="text-lg font-semibold mt-3 mb-2">Departments</h5>
+                <ul class="list-disc list-inside">
+                    {% for dept in departments %}
+                        <li class="flex items-center justify-between text-gray-700 dark:text-gray-300">
+                            <span>{{ dept.dept }}</span>
+                            <form method="post" style="display:inline;">
+                                {% csrf_token %}
+                                <button type="submit" name="delete_department" value="{{ dept.id }}" class="ml-2 text-red-600 hover:underline">Delete</button>
+                            </form>
+                        </li>
+                    {% empty %}
+                        <li class="text-gray-500 dark:text-gray-400">No departments yet.</li>
+                    {% endfor %}
+                </ul>
             </div>
-            <div>
-                <label class="block text-sm font-medium text-gray-700 dark:text-gray-200 mb-1">Minutes</label>
-                <input type="number" name="duration_minutes" min="0" value="0" required
-                    class="w-full px-4 py-2 rounded-lg border focus:outline-none focus:ring-2 focus:ring-blue-500 dark:bg-gray-700 dark:text-gray-100" />
+            <div class="bg-white dark:bg-gray-800 p-4 sm:p-6 rounded-lg shadow-lg">
+                <h4 class="text-xl font-semibold mb-4">Add Position</h4>
+                <form method="post" class="space-y-4 mb-4">
+                    {% csrf_token %}
+                    {{ pos_form.as_p }}
+                    <button type="submit" name="add_position"
+                        class="w-full py-2 bg-blue-600 text-white font-semibold rounded-lg shadow hover:bg-blue-700 transition">
+                        Add Position
+                    </button>
+                </form>
+                <h5 class="text-lg font-semibold mt-3 mb-2">Positions</h5>
+                <ul class="list-disc list-inside">
+                    {% for pos in positions %}
+                        <li class="flex items-center justify-between text-gray-700 dark:text-gray-300">
+                            <span>{{ pos.title }}</span>
+                            <form method="post" style="display:inline;">
+                                {% csrf_token %}
+                                <button type="submit" name="delete_position" value="{{ pos.id }}" class="ml-2 text-red-600 hover:underline">Delete</button>
+                            </form>
+                        </li>
+                    {% empty %}
+                        <li class="text-gray-500 dark:text-gray-400">No positions yet.</li>
+                    {% endfor %}
+                </ul>
             </div>
-            <div>
-                <label class="block text-sm font-medium text-gray-700 dark:text-gray-200 mb-1">Seconds</label>
-                <input type="number" name="duration_seconds" min="0" value="0" required
-                    class="w-full px-4 py-2 rounded-lg border focus:outline-none focus:ring-2 focus:ring-blue-500 dark:bg-gray-700 dark:text-gray-100" />
+        </div>
+        <div class="grid grid-cols-1 md:grid-cols-2 gap-4 mt-4">
+            <div class="bg-white dark:bg-gray-800 p-4 sm:p-6 rounded-lg shadow-lg">
+                <h4 class="text-xl font-semibold mb-4">Add Candidate</h4>
+                <form method="post" enctype="multipart/form-data" class="space-y-4 mb-4">
+                    {% csrf_token %}
+                    {{ cand_form.as_p }}
+                    <button type="submit" name="add_candidate"
+                        class="w-full py-2 bg-blue-600 text-white font-semibold rounded-lg shadow hover:bg-blue-700 transition">
+                        Add Candidate
+                    </button>
+                </form>
+                <h5 class="text-lg font-semibold mt-3 mb-2">Candidates</h5>
+                <ul class="list-disc list-inside">
+                    {% for cand in candidates %}
+                        <li class="flex items-center justify-between text-gray-700 dark:text-gray-300">
+                            <span>{{ cand.name }} ({{ cand.candidate_position }}, {{ cand.department }})</span>
+                            <form method="post" style="display:inline;">
+                                {% csrf_token %}
+                                <button type="submit" name="delete_candidate" value="{{ cand.id }}" class="ml-2 text-red-600 hover:underline">Delete</button>
+                            </form>
+                        </li>
+                    {% empty %}
+                        <li class="text-gray-500 dark:text-gray-400">No candidates yet.</li>
+                    {% endfor %}
+                </ul>
             </div>
-            <button type="submit"
-                class="w-full py-3 bg-blue-600 text-white font-semibold rounded-lg shadow hover:bg-blue-700 transition">
-                Start Election
-            </button>
-        </form>
-
-        <h3 class="text-lg font-bold mb-3 text-gray-800 dark:text-gray-100 text-center">Ongoing Elections</h3>
-        {% if ongoing_elections %}
-            <ul class="space-y-3">
-                {% for e in ongoing_elections %}
-                    <li class="p-4 rounded-lg border bg-green-50 dark:bg-green-900 shadow flex flex-col gap-1">
-                        <span class="text-xs text-gray-500 dark:text-gray-300 font-semibold">Started:</span>
-                        <span class="text-sm font-bold text-gray-700 dark:text-gray-100">{{ e.start_time|date:"Y-m-d H:i:s" }}</span>
-                        <span class="text-xs text-gray-500 dark:text-gray-300 font-semibold">Ends:</span>
-                        <span class="text-sm font-bold text-gray-700 dark:text-gray-100">{{ e.end_time|date:"Y-m-d H:i:s" }}</span>
-                        <span class="text-xs text-gray-500 dark:text-gray-300 font-semibold">Duration:</span>
-                        <span class="text-sm font-bold text-green-700 dark:text-green-400">{{ e.duration_minutes }} minutes</span>
+            <div class="bg-white dark:bg-gray-800 p-4 sm:p-6 rounded-lg shadow-lg">
+                <h4 class="text-xl font-semibold mb-4">Add Vote</h4>
+                <form method="post" class="space-y-4 mb-4">
+                    {% csrf_token %}
+                    {{ vote_form.as_p }}
+                    <button type="submit" name="add_vote"
+                        class="w-full py-2 bg-blue-600 text-white font-semibold rounded-lg shadow hover:bg-blue-700 transition">
+                        Add Vote
+                    </button>
+                </form>
+                <h5 class="text-lg font-semibold mt-3 mb-2">Votes</h5>
+                <ul class="list-disc list-inside">
+                    {% for vote in votes %}
+                        <li class="flex items-center justify-between text-gray-700 dark:text-gray-300">
+                            <span>{{ vote.user.username }} voted for {{ vote.candidate.name }} as {{ vote.position.title }}</span>
+                            <form method="post" style="display:inline;">
+                                {% csrf_token %}
+                                <button type="submit" name="delete_vote" value="{{ vote.id }}" class="ml-2 text-red-600 hover:underline">Delete</button>
+                            </form>
+                        </li>
+                    {% empty %}
+                        <li class="text-gray-500 dark:text-gray-400">No votes yet.</li>
+                    {% endfor %}
+                </ul>
+            </div>
+        </div>
+        <div class="bg-white dark:bg-gray-800 p-4 sm:p-6 rounded-lg shadow-lg mt-4">
+            <h4 class="text-xl font-semibold mb-4">Add Election</h4>
+            <form method="post" class="space-y-4 mb-4">
+                {% csrf_token %}
+                {{ election_form.as_p }}
+                <button type="submit" name="add_election"
+                    class="w-full py-2 bg-blue-600 text-white font-semibold rounded-lg shadow hover:bg-blue-700 transition">
+                    Add Election
+                </button>
+            </form>
+            <h5 class="text-lg font-semibold mt-3 mb-2">Elections</h5>
+            <ul class="list-disc list-inside">
+                {% for election in elections %}
+                    <li class="flex items-center justify-between text-gray-700 dark:text-gray-300">
+                        <span>{{ election.start_time }} - {{ election.end_time }} ({{ election.is_active|yesno:"Active,Inactive" }})</span>
+                        <form method="post" style="display:inline;">
+                            {% csrf_token %}
+                            <button type="submit" name="delete_election" value="{{ election.id }}" class="ml-2 text-red-600 hover:underline">Delete</button>
+                        </form>
                     </li>
+                {% empty %}
+                    <li class="text-gray-500 dark:text-gray-400">No elections yet.</li>
                 {% endfor %}
             </ul>
-        {% else %}
-            <p class="text-center text-red-500 font-semibold mt-4">No ongoing elections.</p>
-        {% endif %}
-
-        <div class="mt-8 text-center">
-            <button onclick="window.history.back()"
-                class="py-2 px-4 bg-gray-200 dark:bg-gray-700 text-gray-800 dark:text-gray-200 font-semibold rounded-lg shadow hover:bg-gray-300 dark:hover:bg-gray-600 transition inline-flex items-center">
-                <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5 mr-2" viewBox="0 0 20 20" fill="currentColor">
-                    <path fill-rule="evenodd" d="M12.707 5.293a1 1 0 010 1.414L9.414 10l3.293 3.293a1 1 0 01-1.414 1.414l-4-4a1 1 0 010-1.414l4-4a1 1 0 011.414 0z" clip-rule="evenodd" />
-                </svg>
-                Go Back
-            </button>
+        </div>
     </div>
 </body>
 </html>
